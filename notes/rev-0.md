@@ -190,13 +190,19 @@ So, we need a forward declaration, but seems to work okay.
 
 This is a pretty fundamental issue - c++ effectively gives us the ability to
 forward declare comptime functions, AND call them without actually having an
-implementation, which is hard to do in our more 'general' system.
+implementation, which is hard to do in our more 'general' system. Even if we
+could get around it and use a c++ like system, we'd still have problem with the
+order of data / code declarations, which c++ solves with forward declarations:
 
 ```
 
 comptime fn Foo = (T: $type) -> $type {
   `struct {
     b: &@Bar(T),
+
+		// Even assuming Bar(T) wasn't infinite recursion (which we solved by
+		treating it as an undefined type of 'pointer' for now), here we have a
+		function which uses the value of b before Bar is actually defined.
     fn do_stuff() -> @T {
         return b->val;
     }
@@ -211,7 +217,161 @@ comptime fn Bar = (T: $type) -> $type {
 };
 ```
 
+To solve THIS, we need to make sure that the templating stage ONLY generated
+code, and that generated code is then evaluated in 2 passes, with the data
+being evaluated first, and the functions evaluated second.
 
+So, we're now back to the original problem, of preventing infinite recursion
+(hopefully without introducing the need for forward declarations).
+
+We COULD have ANOTHER pass to resolve pointer types, so Foo(i32) would
+initially evaluate to this:
+
+```
+struct {
+	b: <pointer>
+	val: i32
+}
+```
+
+then once Bar was evaluated, b's type would be complete. this is fine, since
+this pass would go after evaluating data, but before evaluating code.
+
+There's another issue with this, though. Modules run in a defined order, since
+you want to be able to introspect types from one modules to produce types in
+another - for this reason, this 5 pass system must be run one module at a time.
+This means that this two way relationship would struggle to exist
+cross-modules, since when a module is finished running you'd want the types to
+be 100% complete for any further modules.
+
+This exposes a large problem of using incomplete declarations of comptime types:
+
+```
+/* foo.cel */
+
+import bar::Bar
+
+comptime fn Foo = (T: $type) -> $type {
+	`struct {
+		val: &@Bar(T)
+	}
+}
+
+/* bar.cel */
+
+comptime fn Bar = (T: $type) -> $type {
+	`struct {
+		val: &@T
+	}
+}
+```
+
+if foo.cel is included before bar.cel, is this valid? Maybe. Bar might depend
+on some compile-time data that hasn't been initialised by the module yet,
+though. In this case however, it's fine, and hsould be allowed.
+
+This seems to indicate the need for a `needs_include` tag which can prevent
+comptime functions from running before a module has been included. Here is an
+example of a codebase where that might be needed:
+
+```
+comptime var largest_array_size_made = 0;
+
+comptime fn array = (T: $type, x: u64) -> $type {
+	largest_array_size_made = math::max(x, largest_array_size_made);
+	T[x]
+}
+
+// Make some arrays
+var arr_0 : array(i32, 4) = undefined;
+var arr_2 : array(i32, 6) = undefined;
+var arr_1 : array(i32, 5) = undefined;
+
+// last_array_size_made will be 6 here. We're expecting `Bar(T)` to contain an
+// array of `T` that can hold an element for each element in the arrays.
+
+comptime fn Bar(T: $type) -> $type {
+	`struct {
+		values: @T[largest_array_size_made]
+	}
+}
+
+```
+
+Being the writer of the above module, you would expect `Bar(T)` to be a struct
+containing an array of 6 `T`s. However, if we called Bar from another module
+before Bar was `#include`d, we'd actually get a struct with an array of size 0.
+So, you'd want to limit this to only be runafter this module has run:
+
+```
+#needs_include
+comptime fn Bar(T: $type) -> $type {
+	...
+}
+```
+
+This means calling `Bar(...)` without having `#include`d the module already
+will result in a nice compile error.
+
+## Type inference
+
+It's been mentioned that the way to implement generic types is via macros (i.e.
+comptime functions). However, this means we can't infer template parameters,
+which is a HUGE drawback.
+
+```
+// Maybe we only want to store < 65k entities, so we can use u16 instead of u32 for storing length.
+comptime fn Vec = (T: $type, IntType: %type) -> $type {
+  `struct {
+    ptr: &@T,
+    len: @IntType,
+    cap: @IntType,
+  }
+}
+
+
+// Unfortunately, we can't make this default or infer T.
+```
+
+We potentially need to make type-based templating have a specific syntax, so the compiler understands the type inference:
+
+```
+type Vec = struct(T: $type, IntType: $type = u16) {
+    ptr: &@T,
+    len: @IntType,
+    cap: @IntType,
+    fn copy = (other: &Vec(T)) -> Vec(T) {
+        ...
+    }
+}
+
+var v0 = make Vec(u32) {null, 0, 0};
+var v1 = Vec::copy(v0); // Vec::copy infers T based on arg 0
+```
+
+Notice same syntax, means we don't have the c++ program of >> operators
+
+We can now access static methods without qualifying the type too, i.e.
+`Vec::copy` rather than `Vec(T)::copy`. The (T) can get inferred (see 'Function
+type inference' below).
+
+Vec::copy is now `(T: $type) -> ((&Vec(T)) -> Vec(T))`. The special syntax lets
+us understand that Vec is a struct with methods, and we can change the types of
+functions accordingly.
+
+### Function type inference
+
+Now we can separate the member methods into type functions (i.e. `typeof(Vec::copy)` ==
+`comptime fn (T: $type) -> fn (&Vec(T)) -> Vec(T)`), we need a way to use this template to
+infer type arguments.
+
+Inference based on arguments is pretty easy, and will probably work similar to
+Prolog's 'unification' of types. Obviously if the parameter is just type 'T',
+where T is a template parameter, T can unify based on the type of that argument.
+It gets harder when the argument is a kind, i.e. Vec(T).
+
+If Vec(T) is a proper 'generic type', i.e. not created with comptime fn, this is
+fine. For now, just ignore when Vec is a comptime fn - since that requires more advanced analysis of Vec.
 
 ## Example syntax
 
@@ -320,8 +480,13 @@ comptime fn add_list = (args: $expr...) -> $expr {
 
 // Notice, the macro expressions are sanitized by default, by surrounding with ().
 
-// We can use this to template structs. Notice $type instead of $expr - this 
-// guarantees that the input is a valid syntax for a type.
+// We can use this to (sort of) template structs. Notice $type instead of
+// $expr - this guarantees that the input is a valid syntax for a type.
+// Note: if you actually want struct / function templates, use the struct /
+// function templates in the 'Real templates' section! These actually support type
+// inference and have nicer syntax. This is really just if you have a very complex
+// type, and in general won't play too well with type inference / circular
+// declarations.
 
 comptime fn MyContainer = (T: $type) -> $type {
   `struct {
@@ -350,4 +515,78 @@ foo(v);
 
 // This will typecheck, as both MyContainer(i32)s are the same.
 
+// Comptime functions are just functions that can ONLY be called at compile time. 
+// Any function can be called at compile time - if called from a comptime function. 
+// For example:
+fn add = (a: i32, b: i32) -> i32 { return a + b; }
+comptime fn array(T: $type, a: i32, b: i32) -> $type {
+    T[add(a, b)] // Call an 'add' function, which is not comptime, but will be evaluated at comptime.
+}
+
+```
+
+### Structs
+
+```
+// Struct with methods
+type Adder = struct {
+  a: u32,
+  b: u32,
+  fn add = () -> u32 {
+    a + b
+  }
+}
+```
+
+### Real templates (generic types)
+
+```
+// comptime fn isn't really suitable for implementing generic types, since we'd 
+// have no type inference. This is an example of actual struct and function templates.
+
+type Vec = struct(T: $type, IntType: &type = u16) {
+  ptr: &T,
+  len: IntType,
+  cap: IntType,
+  static fn copy = (other: &Vec(T)) -> Vec(T) {
+    ...
+  }
+};
+
+// Here, 'copy' can be inferred when doing stuff like this:
+var v0 = make Vec(u32) { null, 0, 0 }
+var v1 = Vec::copy(v0); // v1 is a Vec(u32)
+// Here, 'copy' has type `comptime fn (T: $type) -> fn (other: &Vec(T)) -> Vec(T)`
+
+// This is a generic function.
+fn add(T: $type) = (a: T, b: T) -> T {
+  return a + b;
+}
+// here, `add` has type `comptime fn (T: $type) -> fn (a: T, b: T) -> T`
+
+var x = add(3u32, 4u32); // Inferred that T = u32
+var x : i32 = add(3, 4); // Inferred that T = i32
+var x = add(i8)(3, 4);   // Explicit typing, x is inferred to be i8
+var x = add(3, 4);       // Implicit numbers, x is inferred to be i32 (since 3 and 4 are by deafult i32)
+```
+
+### Default int / float types
+
+```
+var x = 3;
+// what is x?
+// x is i32 by default.
+
+var y = 3.4;
+// What is y?
+// float by default.
+var z = 123123123123;
+// z is i64.
+
+fn add(T: $type) = (a: T, b: T) -> T { return a + b; }
+add(3, 4); // i32
+add(3u32, 4); // u32
+add(u32)(3, 4); // u32
+add(123123123, 123123123); // i64
+var x : u8 = add(3, 4); // u8
 ```
