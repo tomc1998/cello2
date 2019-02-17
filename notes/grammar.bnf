@@ -1,68 +1,105 @@
 
-Program ::= StatementOrPreprocessor | StatementOrPreprocessor ";" Program
+Program ::= ( StatementOrPreprocessor ";" ) *
 
 StatementOrPreprocessor ::= Statement | Preprocessor
 
-Preprocessor ::= "#" "include" Identifier
+Preprocessor ::= "#" "include" Identifier | "#" "import" Identifier
 
-StatementList ::= Statement | Statement ";" StatementList
+StatementList ::= "{" ( Statement [ ";" ] ) * "}"
 
-Statement ::= | VarDeclaration
-  | TypeDeclaration
-  | FnDeclaration
+Statement ::= [ "export" ] VarDeclaration
+  | [ "export" ] TypeDeclaration
+  | [ "export" ] FnDeclaration
+  | ExternFnDeclaration
   | Expression
+  | ComptimeForLoop
+  | ForLoop
 
-Expression ::= "{" StatementList "}"
-  | FnSignature
+Expression ::= StatementList
   | ComptimeFnDeclaration
   | Comptime
   | Literal
-  | Symbol
-  | TypeIdent
+  | Identifier
+  | QualifiedName
+  | Expression
   | FunctionCall
+  | MakeExpression
+  | EnumVariantExpression
   | "undefined"
+  | MetaTypeIdent
+  | FnType
+  | ComptimeIf
+  | If
+  | UnaryOp Expression
+  | Lambda
+
+VarDeclaration ::= "var" Identifier [ ":" Expression ] "=" Expression
   
-VarDeclaration ::= [ "export" ] "var" Symbol [ ":" Expression ] "=" Expression
-  
-FnDeclaration ::= [ "export" ] "fn" Symbol "=" FnSignature [Expression]
-  | "fn" Symbol "(" ParameterDeclList ")" "=" FnSignature [Expression]
+FnDeclaration ::=
+  "fn" Identifier [ TemplateParameterDeclList ] "=" FnSignature Expression
 
-ComptimeFnDeclaration ::= "comptime" "fn" Symbol "=" FnSignature Expression
-  | "comptime" "fn" Symbol "(" ParameterDeclList ")" "=" FnSignature Expression
+ExternFnDeclaration ::=
+  "extern" "fn" Identifier "=" FnSignature
 
-FnSignature ::= "(" ParameterDeclList ")"
-  | "(" ParameterDeclList ")" "->" TypeIdent
+ComptimeFnDeclaration ::= "comptime" "fn" Identifier "=" FnSignature Expression
+  | "comptime" "fn" Identifier ParameterDeclList "=" FnSignature Expression
 
-TypeDeclaration ::= [ "export" ] type Symbol "=" TypeDefinition
+FnSignature ::= ParameterDeclList [ "mut" ] [ "->" Expression ]
 
-TypeDefinition ::= TypeIdent
+FnType ::= "fn" FnSignature
+
+TypeDeclaration ::= type Identifier "=" TypeDefinition
+
+TypeDefinition ::= Expression
   | Comptime
   | StructDefinition
+  | EnumDefinition
 
-StructDefinition ::= "struct" "{" StructFields "}"
+EnumDefinition ::= "enum" "{" ( EnumField [ "," ] ) * "}"
 
-StructFields ::= StructField [ "," ] | StructField "," StructFields
+EnumField ::= Identifier [ "(" Expression ")" ]
 
-StructField ::= MemberVarDecl | MemberFnDecl
+// comma only optional for last field
+StructDefinition ::= "struct" "{" ( StructField [ "," ] ) * "}"
 
-MemberVarDecl ::= Symbol ":" TypeIdent
+StructField ::= ["static"] MemberVarDecl | ["static"] FnDeclaration
 
-MemberFnDecl ::= ["static"] FnDeclaration
+// The literal should be an integer, since it's a bitfield
+MemberVarDecl ::= Identifier ":" Expression [ "{" Literal "}" ] [ "=" Expression ]
 
-Comptime ::= "comptime" Expression
+Comptime ::= "comptime" StatementList
 
-ParameterDeclList ::= ParameterDecl [","] | ParameterDecl "," ParameterDeclList
-ParameterDecl ::= Symbol ":" TypeIdent
-ParameterList ::= Expression | Expression "," ParameterList
+ParameterDeclList ::= "(" ( ParameterDecl [","] ) * ")"
+TemplateParameterDeclList ::= "<" ( ParameterDecl [","] ) * ">"
+ParameterDecl ::= Identifier ":" Expression | Expression
+ParameterList ::= "(" ( Expression [","] ) * ")"
+TemplateParameterList ::= "<" ( Expression [","] ) * ">"
 
-TypeIdent ::= Symbol
-  | FnSignature
-  | "&" Symbol
-  | FunctionCall
-  | MetaTypeIdent
-  | Comptime
+// TODO Solve this, should be Expression :: Ident :: Ident ... but this is left
+// recursive
+QualifiedName ::= Expression
+  | Expression "::" QualifiedName
+  | Expression "." QualifiedName
+  | Expression "." IntLit
 
 MetaTypeIdent ::= "$" "type"
   | "$" "expr"
 
-FunctionCall ::= Expression "(" ParameterList ")"
+/* Actual code, rather than data definition */
+
+MakeExpression ::= "make" Identifier "{" ( Expression [","] ) * "}"
+  | "make" Expression ParameterList
+
+ComptimeForLoop ::= "comptime" ForLoop
+ComptimeIf ::= "comptime" If
+
+ForLoop ::= "for" Identifier "in" Expression Expression
+If ::= "if" Expression Expression Elif * [ Else ]
+Elif ::= "elif" Expression Expression
+Else ::= "else" Expression Expression
+
+Lambda ::= "lambda" FnSignature Expression
+
+BinaryExpression ::= Expression BinaryOp Expression
+
+FunctionCall ::= Expression [ "::" TemplateParameterList ] ParameterList

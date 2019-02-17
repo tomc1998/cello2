@@ -6,7 +6,7 @@ type ButtonType = enum {
 };
 
 type Button = struct {
-  type: ButtonType
+  type: ButtonType,
   down: bool{1} = false, // {1} for bitfield
   just_changed: bool{1} = false,
 };
@@ -21,10 +21,10 @@ type ControlState = struct {
   shoot:      Button = make Button { ButtonType::Key(glfw::KEY_SPACE) },
 };
 
-fn for_all_buttons = (cstate: $expr, f: fn (&Button)) {
-  comptime for f in ControlState.fields {
-    comptime if f.type == Button {
-      f(meta::offsetof(ControlState, f))
+fn for_all_buttons = (cstate: &ControlState, f: fn (&Button)) {
+  comptime for field in ControlState.fields {
+    comptime if field.type == Button {
+      f(meta::get_field(cstate, field))
     }
   }
 }
@@ -34,7 +34,7 @@ type InputManager = struct {
   // Get a list of all the buttons
   all_buttons: AllButtons = get_all_buttons(cstate),
 
-  static instance: InputManager = make InputManager();
+  static instance: InputManager = InputManager::new(),
 
   static fn get = () -> &InputManager {
     instance
@@ -49,14 +49,14 @@ type InputManager = struct {
   static fn mouse_callback = (w: &glfw::Window, button: i32, action: i32, mods: i32) {
     var iman = InputManager::get();
     if action == glfw::PRESS {
-      for_all_buttons(iman.cstate, (b: &Button) {
+      for_all_buttons(iman.cstate, lambda (b: &Button) {
         if b.type == ButtonType::Mouse && b.type.Mouse.0 == button && !b.down {
             b.down = true;
             b.just_changed = true;
         }
       });
     } elif action == glfw::RELEASE {
-      for_all_buttons(iman.cstate, (b: &Button) {
+      for_all_buttons(iman.cstate, lambda (b: &Button) {
         if b.type == ButtonType::Mouse && b.type.Mouse.0 == button && b.down {
             b.down = false;
             b.just_changed = true;
@@ -68,14 +68,14 @@ type InputManager = struct {
   static fn key_callback = (w: &glfw::Window, key: i32, scancode: i32, action: i32, mods: i32) {
     var iman = InputManager::get();
     if action == glfw::PRESS {
-      for_all_buttons(iman.cstate, (b: &Button) {
+      for_all_buttons(iman.cstate, lambda (b: &Button) {
         if b.type == ButtonType::Key && b.type.Key.0 == key && !b.down {
             b.down = true;
             b.just_changed = true;
         }
       });
     } elif action == glfw::RELEASE {
-      for_all_buttons(iman.cstate, (b: &Button) {
+      for_all_buttons(iman.cstate, lambda (b: &Button) {
         if b.type == ButtonType::Key && b.type.Key.0 == key && b.down {
             b.down = false;
             b.just_changed = true;
@@ -85,14 +85,15 @@ type InputManager = struct {
   },
 
   // Constructor, run after make / new
-  fn _init = () {
+  static fn new = () -> InputManager {
     glfw::setKeyCallback(InputManager::key_callback);
     glfw::setMouseCallback(InputManager::mouse_callback);
     glfw::setCursorPosCallback(InputManager::cursor_callback);
+    make InputManager {}
   },
 
   fn poll = () mut {
-    for b : all_buttons {
+    for b in all_buttons {
       b.just_changed = false;
     }
     glfw::pollEvents();

@@ -22,7 +22,7 @@ struct source_label {
       // Count lines
       int lines = 1;
       const char* last_line_start = nullptr;
-      for (int ii = 0; ii < pos; ++ii) {
+      for (unsigned ii = 0; ii < pos; ++ii) {
         if (file[ii] == '\n') {
           last_line_start = &*(file.begin() + ii);
           lines += 1;

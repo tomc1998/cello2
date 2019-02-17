@@ -10,9 +10,17 @@
 // Only including this to throw runtime_errors. Can be much better than asserts.
 #include <exception>
 
+// Put variant into nonstd namespace, 'cause it's f u c k i n g annoying to have
+// to type out mapbox::util:: all the time
+namespace nonstd {
+  using namespace mapbox::util;
+}
+
 #include "arg_parse.hpp"
 #include "source_label.hpp"
 #include "lexer.hpp"
+#include "parse_error.hpp"
+#include "parser.hpp"
 
 int main(int argc, const char** argv) {
 
@@ -34,13 +42,7 @@ int main(int argc, const char** argv) {
                    std::istreambuf_iterator<char>());
 
   lexer l(file_name, file);
-
-  std::cout << std::endl;
-  nonstd::optional<token> tok;
-  while ((tok = l.next()).has_value()) {
-    std::cout << "\"" << tok->val << "\"" << "(" << (int)tok->type << "), ";
-  }
-  std::cout << std::endl;
+  const auto tree = parse(l);
 
   return 0;
 }
