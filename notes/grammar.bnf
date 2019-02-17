@@ -1,0 +1,68 @@
+
+Program ::= StatementOrPreprocessor | StatementOrPreprocessor ";" Program
+
+StatementOrPreprocessor ::= Statement | Preprocessor
+
+Preprocessor ::= "#" "include" Identifier
+
+StatementList ::= Statement | Statement ";" StatementList
+
+Statement ::= | VarDeclaration
+  | TypeDeclaration
+  | FnDeclaration
+  | Expression
+
+Expression ::= "{" StatementList "}"
+  | FnSignature
+  | ComptimeFnDeclaration
+  | Comptime
+  | Literal
+  | Symbol
+  | TypeIdent
+  | FunctionCall
+  | "undefined"
+  
+VarDeclaration ::= [ "export" ] "var" Symbol [ ":" Expression ] "=" Expression
+  
+FnDeclaration ::= [ "export" ] "fn" Symbol "=" FnSignature [Expression]
+  | "fn" Symbol "(" ParameterDeclList ")" "=" FnSignature [Expression]
+
+ComptimeFnDeclaration ::= "comptime" "fn" Symbol "=" FnSignature Expression
+  | "comptime" "fn" Symbol "(" ParameterDeclList ")" "=" FnSignature Expression
+
+FnSignature ::= "(" ParameterDeclList ")"
+  | "(" ParameterDeclList ")" "->" TypeIdent
+
+TypeDeclaration ::= [ "export" ] type Symbol "=" TypeDefinition
+
+TypeDefinition ::= TypeIdent
+  | Comptime
+  | StructDefinition
+
+StructDefinition ::= "struct" "{" StructFields "}"
+
+StructFields ::= StructField [ "," ] | StructField "," StructFields
+
+StructField ::= MemberVarDecl | MemberFnDecl
+
+MemberVarDecl ::= Symbol ":" TypeIdent
+
+MemberFnDecl ::= ["static"] FnDeclaration
+
+Comptime ::= "comptime" Expression
+
+ParameterDeclList ::= ParameterDecl [","] | ParameterDecl "," ParameterDeclList
+ParameterDecl ::= Symbol ":" TypeIdent
+ParameterList ::= Expression | Expression "," ParameterList
+
+TypeIdent ::= Symbol
+  | FnSignature
+  | "&" Symbol
+  | FunctionCall
+  | MetaTypeIdent
+  | Comptime
+
+MetaTypeIdent ::= "$" "type"
+  | "$" "expr"
+
+FunctionCall ::= Expression "(" ParameterList ")"
