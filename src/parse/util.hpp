@@ -35,3 +35,8 @@
   if (!l.peek()) {                                      \
     throw parse_error(l.get_curr_source_label(), msg);  \
   }
+
+
+bool is_assignment_op(const token& t) {
+  return t.val == "=" || t.val == "+=" || t.val == "-=" || t.val == "/=" || t.val == "*=";
+}

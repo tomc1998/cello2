@@ -1,6 +1,6 @@
 std::regex r_ident = std::regex("[A-Za-z_][A-Za-z0-9_]*");
-std::regex r_punc = std::regex("(\\{|\\}|\\(|\\)|\\[|\\]|,|\\.|`|@|\\$|#|;|::|:)");
-std::regex r_op = std::regex("(->|\\*|\\+|-|\\/|&&|\\|\\||\\||&|>=|<=|==|>|<|=|!)");
+std::regex r_punc = std::regex("(\\{|\\}|\\(|\\)|\\[|\\]|,|\\.\\.|\\.|`|@|\\$|#|;|::|:)");
+std::regex r_op = std::regex("(->|!=|%=|\\+=|-=|\\*=|\\/=|&=|\\|=|&&|\\|\\||\\||&|>=|<=|==|>|<|=|\\*|\\+|-|\\/|%|!)");
 std::regex r_float_lit = std::regex("[-+]?[0-9]\\.[0-9]");
 std::regex r_int_lit = std::regex("(0b|0x)?[0-9]+");
 std::regex r_string_lit = std::regex("\"(\\\\.|[^\"\\\\])*\"");
@@ -77,6 +77,9 @@ class lexer {
     } else if (std::regex_search(start, end, m, r_ident, std::regex_constants::match_continuous)) {
       tok = token { nonstd::string_view (start, m.length()), token_type::ident };
       input_ptr += m.length();
+    } else if (std::regex_search(start, end, m, r_comment, std::regex_constants::match_continuous)) {
+      input_ptr += m.length();
+      tok = consume();
     } else {
       throw std::runtime_error(std::string("Failed to match token input: ")
                                + input.substr(input_ptr, std::min(input_ptr + 20, input.size()))
@@ -87,6 +90,8 @@ class lexer {
 
 public:
   lexer(nonstd::string_view file_name, std::string data) : file_name(file_name), input(data) {}
+
+  bool strip_comments = true;
 
   const token *peek(int n) {
     assert(n < MAX_PEEK);

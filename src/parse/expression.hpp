@@ -1,16 +1,40 @@
-parse_node parse_expression(lexer& l) {
+/**
+   @param no_right_angle - When true, this won't parse right angle braces (">")
+   as a greater than symbol. This is to prevent abiguity when declaring function
+   template parameters, i.e. `foo<a: $type> = ...` won't parse the last bit as
+   `type > =`.
+
+   Bit of a hack, but the alternative is a totally separate production, called
+   'expression_no_ra' or something.
+
+   This won't propogate to future expressions, i.e. any expressions contained in
+   this one will consume as greater than (this is generally what you want,
+   though).
+
+   The default value for this is false.
+ */
+parse_node parse_expression(lexer& l, bool no_right_angle) {
   PARSE_ASSERT_NOT_EMPTY(l, "Expected expression, found EOF");
   parse_node lrec;
   // Try to parse all non-recursive stuff
   if (l.peek()->val == "{") { // StatementList
     lrec = { nterm::expression, { parse_statement_list(l) } };
+  } else if (l.peek()->val == "(") {
+    std::vector<parse_node> children { { *l.next(), {} }, parse_expression(l) };
+    PARSE_ASSERT_VAL(l, ")");
+    children.push_back({ *l.next(), {} });
+    lrec = { nterm::expression, children };
   } else if (l.peek()->val == "comptime") { // comptime or comptime fn
     if (l.peek(1) && l.peek(1)->val == "fn") { // comptime fn
       lrec = { nterm::expression, { parse_comptime_fn_declaration(l) } };
     } else if (l.peek(1) && l.peek(1)->val == "if") {
       lrec = { nterm::expression, { parse_comptime_if(l) } };
-    } else { // comptime
+    } else if (l.peek(1) && l.peek(1)->val == "{") { // comptime block
       lrec = { nterm::expression, { parse_comptime(l) } };
+    } else if (l.peek(1) && (l.peek(1)->val == "var" || l.peek(1)->val == "mut")) {
+      lrec = { nterm::expression, { parse_var_declaration(l) } };
+    } else {
+      lrec = { nterm::expression, { { *l.next(), {} }, parse_expression(l) } };
     }
   } else if (l.peek()->val == "$") {
     lrec = { nterm::expression, { parse_meta_type_ident(l) } };
@@ -49,9 +73,18 @@ parse_node parse_expression(lexer& l) {
                && (l.peek(1)->type == token_type::ident
                    || l.peek(1)->type == token_type::int_lit)) {
       lrec = parse_qualified_name(l, lrec);
-    } else if (l.peek()->val == "(" || (l.peek()->val == "::" && l.peek(1) && l.peek(1)->val == "<")) {
+    } else if (l.peek()->val == "(") {
       lrec = parse_function_call(l, lrec);
-    } else if (l.peek()->type == token_type::op) {
+    } else if (l.peek()->val == "::" && l.peek(1) && l.peek(1)->val == "<") {
+      lrec = parse_qualified_type(l, lrec);
+    } else if (l.peek()->val == "[") {
+      lrec = parse_array_access(l, lrec);
+    } else if (l.peek()->val == "..") {
+      lrec = parse_range(l, lrec);
+    }
+    // Check if this is a binary op, but also if no_right_angle is set, check it's not a ">".
+    // As a bonus, don't parse assignment ops here
+    else if (l.peek()->type == token_type::op && !is_assignment_op(*l.peek()) && (!no_right_angle || l.peek()->val != ">")) {
       lrec = parse_binary_expression(l, lrec);
     } else {
       break;

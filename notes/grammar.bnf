@@ -14,17 +14,19 @@ Statement ::= [ "export" ] VarDeclaration
   | Expression
   | ComptimeForLoop
   | ForLoop
+  | Assignment
 
-Expression ::= StatementList
+Expression ::= "(" Expression ")"
+  | StatementList
   | ComptimeFnDeclaration
   | Comptime
   | Literal
   | Identifier
   | QualifiedName
+  | QualifiedType
   | Expression
   | FunctionCall
   | MakeExpression
-  | EnumVariantExpression
   | "undefined"
   | MetaTypeIdent
   | FnType
@@ -32,8 +34,13 @@ Expression ::= StatementList
   | If
   | UnaryOp Expression
   | Lambda
+  | "comptime" Expression
+  // This is double-used - when specifying an array type (i.e. int[3]) AND accessing (i.e. foo[3])
+  | ArrayAccess
+  | Range
 
-VarDeclaration ::= "var" Identifier [ ":" Expression ] "=" Expression
+VarDeclaration ::= [ "comptime" ] "var" Identifier [ ":" Expression ] "=" Expression
+  | [ "comptime" ] "mut" Identifier [ ":" Expression ] "=" Expression
   
 FnDeclaration ::=
   "fn" Identifier [ TemplateParameterDeclList ] "=" FnSignature Expression
@@ -82,24 +89,37 @@ QualifiedName ::= Expression
   | Expression "." QualifiedName
   | Expression "." IntLit
 
+QualifiedType ::= Expression "::" TemplateParameterList
+
 MetaTypeIdent ::= "$" "type"
   | "$" "expr"
 
 /* Actual code, rather than data definition */
 
-MakeExpression ::= "make" Identifier "{" ( Expression [","] ) * "}"
-  | "make" Expression ParameterList
+MakeExpression ::= "make" Expression "{" ( Expression [","] ) * "}"
+  // Initialise array
+  | "make" Identifier "[" ( Expression [","] ) * "]"
+  // Duplicate across array
+  | "make" Identifier "[" Expression ";" Expression "]"
 
 ComptimeForLoop ::= "comptime" ForLoop
 ComptimeIf ::= "comptime" If
 
 ForLoop ::= "for" Identifier "in" Expression Expression
-If ::= "if" Expression Expression Elif * [ Else ]
-Elif ::= "elif" Expression Expression
-Else ::= "else" Expression Expression
+If ::= "if" Expression StatementList Elif * [ Else ]
+Elif ::= "elif" Expression StatementList
+Else ::= "else" Expression StatementList
 
 Lambda ::= "lambda" FnSignature Expression
 
 BinaryExpression ::= Expression BinaryOp Expression
 
-FunctionCall ::= Expression [ "::" TemplateParameterList ] ParameterList
+BinaryOp ::= Any op apart from "=", see separate Assignment nterm
+
+Assignment ::= Expression "=" Expression
+
+FunctionCall ::= Expression  ParameterList
+ArrayAccess ::= Expression "[" Expression "]"
+
+// Used as a slice or as range in for loops
+Range ::= Expression ".." Expression

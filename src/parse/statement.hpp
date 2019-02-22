@@ -5,7 +5,7 @@ parse_node parse_statement(lexer& l) {
   if (l.peek()->val == "export") {
     children.push_back({ *l.next(), {} });
     PARSE_ASSERT_NOT_EMPTY(l, "Expected rest of statement, got EOF");
-    if (l.peek()->val == "var") {
+    if (l.peek()->val == "var" || l.peek()->val == "mut") {
       children.push_back(parse_var_declaration(l));
     } else if (l.peek()->val == "type") {
       children.push_back(parse_type_declaration(l));
@@ -17,7 +17,7 @@ parse_node parse_statement(lexer& l) {
                         + std::string(l.peek()->val));
     }
   } else {
-    if (l.peek()->val == "var") {
+    if (l.peek()->val == "var" || l.peek()->val == "mut") {
       children.push_back(parse_var_declaration(l));
     } else if (l.peek()->val == "type") {
       children.push_back(parse_type_declaration(l));

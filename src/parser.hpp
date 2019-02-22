@@ -60,8 +60,12 @@ enum class nterm {
   comptime_for_loop,
   comptime_if,
   qualified_name,
+  qualified_type,
   binary_expression,
   function_call,
+  array_access,
+  range,
+  assignment,
 };
 
 /** A parse node is either a terminal (just a string_view) or a non-terminal. It
@@ -81,7 +85,7 @@ parse_node parse_statement_or_preprocessor(lexer& l);
 parse_node parse_preprocessor(lexer& l);
 parse_node parse_statement_list(lexer& l);
 parse_node parse_statement(lexer& l);
-parse_node parse_expression(lexer& l);
+parse_node parse_expression(lexer& l, bool no_right_angle = false);
 parse_node parse_var_declaration(lexer& l);
 parse_node parse_fn_declaration(lexer& l);
 parse_node parse_extern_fn_declaration(lexer& l);
@@ -97,8 +101,8 @@ parse_node parse_enum_field(lexer& l);
 parse_node parse_member_var_decl(lexer& l);
 parse_node parse_comptime(lexer& l);
 parse_node parse_parameter_decl_list(lexer& l);
-parse_node parse_tmplate_parameter_decl_list(lexer& l);
-parse_node parse_parameter_decl(lexer& l);
+parse_node parse_template_parameter_decl_list(lexer& l);
+parse_node parse_parameter_decl(lexer& l, bool no_right_angle = false);
 parse_node parse_parameter_list(lexer& l);
 parse_node parse_template_parameter_list(lexer& l);
 parse_node parse_meta_type_ident(lexer& l);
@@ -114,8 +118,12 @@ parse_node parse_elif(lexer& l);
 parse_node parse_else(lexer& l);
 parse_node parse_lambda(lexer& l);
 parse_node parse_qualified_name(lexer& l, parse_node lrec);
+parse_node parse_qualified_type(lexer& l, parse_node lrec);
 parse_node parse_binary_expression(lexer& l, parse_node lrec);
 parse_node parse_function_call(lexer& l, parse_node lrec);
+parse_node parse_array_access(lexer& l, parse_node lrec);
+parse_node parse_range(lexer& l, parse_node lrec);
+parse_node parse_assignment(lexer& l, parse_node lrec);
 
 // Include parse util
 #include "parse/util.hpp"
@@ -159,8 +167,12 @@ parse_node parse_function_call(lexer& l, parse_node lrec);
 #include "parse/comptime_if.hpp"
 #include "parse/lambda.hpp"
 #include "parse/qualified_name.hpp"
+#include "parse/qualified_type.hpp"
 #include "parse/binary_expression.hpp"
 #include "parse/function_call.hpp"
+#include "parse/array_access.hpp"
+#include "parse/range.hpp"
+#include "parse/assignment.hpp"
 
 parse_tree parse(lexer& l) {
   return { parse_program(l) };

@@ -3,7 +3,7 @@ parse_node parse_template_parameter_list(lexer& l) {
   PARSE_ASSERT_VAL(l, "<");
   children.push_back({ *l.next(), {} });
   while(l.peek() && l.peek()->val != ">") {
-    children.push_back(parse_expression(l));
+    children.push_back(parse_expression(l, true));
     if (l.peek() && l.peek()->val == ",") {
       children.push_back({ *l.next(), {} });
     }

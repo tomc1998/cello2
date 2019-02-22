@@ -2,3 +2,5 @@
 *.swp
 build
 deps
+TAGS
+tags
