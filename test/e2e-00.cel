@@ -1,0 +1,4 @@
+
+/** An end-to-end test of the cello compiler */
+
+1 + 2;

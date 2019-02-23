@@ -21,6 +21,7 @@ namespace nonstd {
 #include "lexer.hpp"
 #include "parse_error.hpp"
 #include "parser.hpp"
+#include "ast.hpp"
 
 int main(int argc, const char** argv) {
 
@@ -43,6 +44,11 @@ int main(int argc, const char** argv) {
 
   lexer l(file_name, file);
   const auto tree = parse(l);
+  ast::ast_node ast(tree);
+
+  std::cout << "AST" << std::endl;
+  std::cout << ast::to_string(ast) << std::endl;
+
 
   return 0;
 }

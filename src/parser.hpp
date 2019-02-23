@@ -73,10 +73,17 @@ enum class nterm {
 struct parse_node {
   nonstd::variant<nterm, token> val;
   std::vector<parse_node> children;
-};
-
-struct parse_tree {
-  parse_node root;
+  bool is_nterm(nterm n) const {
+    return val.template is<nterm>() && val.template get<nterm>() == n;
+  }
+  template <typename T>
+  bool is_term_val(T v) const {
+    return val.template is<token>() && val.template get<token>().val == v;
+  }
+  template <typename T>
+  bool is_term_type(T v) const {
+    return val.template is<token>() && val.template get<token>().type == v;
+  }
 };
 
 // Forward declare all the parse functions
@@ -174,6 +181,6 @@ parse_node parse_assignment(lexer& l, parse_node lrec);
 #include "parse/range.hpp"
 #include "parse/assignment.hpp"
 
-parse_tree parse(lexer& l) {
+parse_node parse(lexer& l) {
   return { parse_program(l) };
 }
