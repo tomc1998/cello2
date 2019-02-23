@@ -138,3 +138,31 @@ and 'size' from the first parameter, unifying T[size] with f32[2].
 
 When a parameter to a function is marked as comptime, it's required to be a
 comptime value.
+
+## Comptime values in structs
+
+```cello
+type Field = struct {
+  field_type: $type,
+  offset: u64,
+}
+
+fn get_field<T: $type> = (v: T, comptime f: Field) -> f.field_type {
+}
+```
+
+Field can be created at comptime, but not at runtime - here, 'Field' is marked
+as comptime only. It can be called 'at runtime' though, since comptime
+parameters for functions just compile out another template. This is so that type
+information CAN be passed around at compiletime, and also fit into containers
+(if `Field` was templated over `T` where `T == field_type`, we couldn't have a
+Field[], since each `Field` is actually a `Field<T>`).
+
+```cello
+fn do_stuff = () {
+  // This is a compile error, f is runtime
+  var f = make Field { i32, 4 };
+  // Fine
+  comptime var f = make Field { i32, 4 };
+}
+```

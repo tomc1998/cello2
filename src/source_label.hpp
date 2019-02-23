@@ -18,7 +18,7 @@ struct source_label {
   /** Generate a string from the label & file */
   std::string to_string(nonstd::string_view file) const {
     int line_number = -1, char_number = -1;
-    if (file.size() > pos) {
+    if (file.size() > pos-1) {
       // Count lines
       int lines = 1;
       const char* last_line_start = nullptr;
@@ -30,7 +30,7 @@ struct source_label {
       }
       line_number = lines;
       if (last_line_start != nullptr) {
-        char_number = (int)((file.begin() + pos) - last_line_start);
+        char_number = (int)((file.begin() + pos) - last_line_start - 2);
       }
     }
     if (line_number == -1) {

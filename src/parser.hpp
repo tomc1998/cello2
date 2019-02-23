@@ -63,6 +63,7 @@ enum class nterm {
   binary_expression,
   function_call,
   array_access,
+  empty_array_access,
   range,
   assignment,
 };
@@ -120,6 +121,7 @@ parse_node parse_qualified_type(lexer& l, parse_node lrec);
 parse_node parse_binary_expression(lexer& l, parse_node lrec);
 parse_node parse_function_call(lexer& l, parse_node lrec);
 parse_node parse_array_access(lexer& l, parse_node lrec);
+parse_node parse_empty_array_access(lexer& l, parse_node lrec);
 parse_node parse_range(lexer& l, parse_node lrec);
 parse_node parse_assignment(lexer& l, parse_node lrec);
 
@@ -168,6 +170,7 @@ parse_node parse_assignment(lexer& l, parse_node lrec);
 #include "parse/binary_expression.hpp"
 #include "parse/function_call.hpp"
 #include "parse/array_access.hpp"
+#include "parse/empty_array_access.hpp"
 #include "parse/range.hpp"
 #include "parse/assignment.hpp"
 

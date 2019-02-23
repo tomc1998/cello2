@@ -60,7 +60,7 @@ comptime fn num_fields = (T: $type) {
 // Gets a list of pointers into the given struct, one for each field
 fn field_pointer_array<T: $type> = (v: &T) -> (&u8)[num_fields(T)] {
   T.fields.map(meta::Field::offset).map(lambda (offset: i64) -> &u8 {
-    (&u8)((i64)(v.addr) + offset)
+    (&u8)((i64)(v) + offset)
   });
 }
 

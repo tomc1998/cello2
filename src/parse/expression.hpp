@@ -74,7 +74,11 @@ parse_node parse_expression(lexer& l, bool no_right_angle) {
     } else if (l.peek()->val == "::" && l.peek(1) && l.peek(1)->val == "<") {
       lrec = parse_qualified_type(l, lrec);
     } else if (l.peek()->val == "[") {
-      lrec = parse_array_access(l, lrec);
+      if (l.peek(1) && l.peek(1)->val == "]") {
+        lrec = parse_empty_array_access(l, lrec);
+      } else {
+        lrec = parse_array_access(l, lrec);
+      }
     } else if (l.peek()->val == "..") {
       lrec = parse_range(l, lrec);
     }

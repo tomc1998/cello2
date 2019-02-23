@@ -23,7 +23,7 @@ Expression ::= "(" Expression ")"
   | Identifier
   | QualifiedName
   | QualifiedType
-  | Expression
+  | UnaryOp Expression
   | FunctionCall
   | MakeExpression
   | "undefined"
@@ -36,6 +36,7 @@ Expression ::= "(" Expression ")"
   | "comptime" Expression
   // This is double-used - when specifying an array type (i.e. int[3]) AND accessing (i.e. foo[3])
   | ArrayAccess
+  | SliceType
   | Range
 
 VarDeclaration ::= [ "comptime" ] "var" Identifier [ ":" Expression ] "=" Expression
@@ -93,15 +94,11 @@ MetaTypeIdent ::= "$" "type"
 /* Actual code, rather than data definition */
 
 MakeExpression ::= "make" Expression "{" ( Expression [","] ) * "}"
-  // Initialise array
-  | "make" Identifier "[" ( Expression [","] ) * "]"
-  // Duplicate across array
-  | "make" Identifier "[" Expression ";" Expression "]"
 
 ComptimeForLoop ::= "comptime" ForLoop
 ComptimeIf ::= "comptime" If
 
-ForLoop ::= "for" Identifier "in" Expression Expression
+ForLoop ::= "for" Identifier ["," Identifier] "in" Expression Expression
 If ::= "if" Expression StatementList Elif * [ Else ]
 Elif ::= "elif" Expression StatementList
 Else ::= "else" Expression StatementList
@@ -116,6 +113,9 @@ Assignment ::= Expression "=" Expression
 
 FunctionCall ::= Expression  ParameterList
 ArrayAccess ::= Expression "[" Expression "]"
+
+// Like ArrayAccess but empty, e.g. int[]
+SliceType ::= Expression "[" "]"
 
 // Used as a slice or as range in for loops
 Range ::= Expression ".." Expression
