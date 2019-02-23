@@ -24,17 +24,13 @@ parse_node parse_expression(lexer& l, bool no_right_angle) {
     PARSE_ASSERT_VAL(l, ")");
     children.push_back({ *l.next(), {} });
     lrec = { nterm::expression, children };
-  } else if (l.peek()->val == "comptime") { // comptime or comptime fn
-    if (l.peek(1) && l.peek(1)->val == "fn") { // comptime fn
-      lrec = { nterm::expression, { parse_comptime_fn_declaration(l) } };
-    } else if (l.peek(1) && l.peek(1)->val == "if") {
+  } else if (l.peek()->val == "comptime") {
+    if (l.peek(1) && l.peek(1)->val == "if") {
       lrec = { nterm::expression, { parse_comptime_if(l) } };
-    } else if (l.peek(1) && l.peek(1)->val == "{") { // comptime block
-      lrec = { nterm::expression, { parse_comptime(l) } };
     } else if (l.peek(1) && (l.peek(1)->val == "var" || l.peek(1)->val == "mut")) {
       lrec = { nterm::expression, { parse_var_declaration(l) } };
     } else {
-      lrec = { nterm::expression, { { *l.next(), {} }, parse_expression(l) } };
+      lrec = { nterm::expression, { parse_comptime(l) } };
     }
   } else if (l.peek()->val == "$") {
     lrec = { nterm::expression, { parse_meta_type_ident(l) } };

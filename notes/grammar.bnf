@@ -18,7 +18,6 @@ Statement ::= [ "export" ] VarDeclaration
 
 Expression ::= "(" Expression ")"
   | StatementList
-  | ComptimeFnDeclaration
   | Comptime
   | Literal
   | Identifier
@@ -47,9 +46,6 @@ FnDeclaration ::=
 
 ExternFnDeclaration ::=
   "extern" "fn" Identifier "=" FnSignature
-
-ComptimeFnDeclaration ::= "comptime" "fn" Identifier "=" FnSignature Expression
-  | "comptime" "fn" Identifier ParameterDeclList "=" FnSignature Expression
 
 FnSignature ::= ParameterDeclList [ "mut" ] [ "->" Expression ]
 

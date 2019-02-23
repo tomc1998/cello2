@@ -31,7 +31,6 @@ enum class nterm {
   var_declaration,
   fn_declaration,
   extern_fn_declaration,
-  comptime_fn_declaration,
   fn_signature,
   fn_type,
   type_declaration,
@@ -89,7 +88,6 @@ parse_node parse_expression(lexer& l, bool no_right_angle = false);
 parse_node parse_var_declaration(lexer& l);
 parse_node parse_fn_declaration(lexer& l);
 parse_node parse_extern_fn_declaration(lexer& l);
-parse_node parse_comptime_fn_declaration(lexer& l);
 parse_node parse_fn_signature(lexer& l);
 parse_node parse_fn_type(lexer& l);
 parse_node parse_type_declaration(lexer& l);
@@ -138,7 +136,6 @@ parse_node parse_assignment(lexer& l, parse_node lrec);
 #include "parse/var_declaration.hpp"
 #include "parse/fn_declaration.hpp"
 #include "parse/extern_fn_declaration.hpp"
-#include "parse/comptime_fn_declaration.hpp"
 #include "parse/fn_signature.hpp"
 #include "parse/fn_type.hpp"
 #include "parse/type_declaration.hpp"

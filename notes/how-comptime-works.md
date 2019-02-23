@@ -1,17 +1,19 @@
 # How comptime works
 
-Variables, types, and functions can all individually be marked as comptime.
+Variables and types, can all individually be marked as comptime. When calling a
+function, one can call that function at compiletime with the comptime block.
 
-## Comptime functions
+## Comptime block
 
-These will be called at compile time, when the runtime function (or file) that
-calls it is compiled. These can call any other functions, which are all executed
-at compile-time (even non-comptime functions). These can be thought of as
-macros, although they can return values.
+Whatever is written inside the block is executed at comptime:
 
-All parameters of comptime functions must be comptime values.
-
-If a function is not marked as comptime, but all the parameters are comptime values, 
+```
+fn add(T: $type) = (a: T, b: T) { a + b }
+var x = comptime {
+  add(3, 4);
+}
+// x == 7, but at compiletime
+```
 
 ## Comptime types
 
@@ -19,23 +21,12 @@ Values of this type are available at compile time - pretty simple. Things like
 literals, or compiletime args, or values formed from other comptime values.
 
 Comptime values can also be used at runtime, but values created by combining
-comptime and runtime values will be runtime values.
+comptime and runtime values will be runtime values. You cannot create a comptime
+value from a runtime value, or assign a runtime value to a comptime var
+(obviously).
 
-Comptime types are useless at runtime:
-
-```cello
-var x : comptime i32 = 3;
-```
-
-This is pointless, since x is a runtime value, so it just restricts
-what it can be assigned to:
-
-```cello
-var y : i32 = 3;
-mut x : comptime i32 = 4;
-x = y; // Compile time error, y is not a comptime value
-y = x; // This is okay.
-```
+Explicitly annotating comptime types is useless, since it's implied by the
+variable modifier.
 
 As such, there is no 'comptime' type modifier - comptime types are largely for
 internal use:
@@ -43,18 +34,24 @@ internal use:
 ```cello
 comptime var x : i32 = 3; // This is actually of type comptime i32
 comptime var y : comptime i32 = 4; // Compile error, comptime isn't a type specifier
+comptime var y : i32 = 4; // This is the correct way
+
+y = x; // This is ok, y is still comptime
+var z : i32 = 5;
+y = z;  // This is not ok, z is runtime
+var z : i32 = y; // This is okay, comptime can be assigned to runtime
 
 // Here, x is of type comptime i32, and this function can only be called with a comptime value
 fn my_function(comptime x: i32) {
   ...
 }
 
-my_function(x); // Error, x is not comptime
+my_function(z); // Error, z is not comptime
 my_function(y); // Fine
 ```
 
-Why can non-comptime functions accept comptime values? They effectively act as
-template parameters, and can be used for other comptime functions:
+Comptime parameters effectively act as template parameters, and can be used for
+other comptime functions, plus change the generation of a function
 
 ```
 // Comptime functino
@@ -136,3 +133,8 @@ var my_vec2_2 = my_vec2_0.add(my_vec2_1);
 
 In the type inference example with vector above, the make expression inferred T
 and 'size' from the first parameter, unifying T[size] with f32[2].
+
+## Comptime parameters
+
+When a parameter to a function is marked as comptime, it's required to be a
+comptime value.
