@@ -153,7 +153,7 @@ public:
     clear_backup();
   }
 
-  nonstd::string_view whole_file() {
+  nonstd::string_view whole_file() const {
     return nonstd::string_view(input);
   }
 };

@@ -40,3 +40,24 @@
 bool is_assignment_op(const token& t) {
   return t.val == "=" || t.val == "+=" || t.val == "-=" || t.val == "/=" || t.val == "*=";
 }
+
+/** Tries to consume until we either come 'out of' the {} block we're in, or
+    until we come to a ; in the same level as us */
+void try_consume_until_after_item(lexer& l) {
+  int curr_level = 0;
+  while (l.peek()) {
+    if (l.peek()->val == "{") {
+      curr_level ++;
+    } else if (l.peek()->val == "}") {
+      curr_level --;
+    } else if (curr_level == 0 && l.peek()->val == ";") {
+      l.next();
+      return;
+    }
+    if (curr_level < 0) {
+      l.next();
+      return;
+    }
+    l.next();
+  }
+}

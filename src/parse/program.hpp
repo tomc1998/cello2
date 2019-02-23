@@ -1,3 +1,12 @@
+void log_all_parse_errors(const lexer& l, const parse_error& e) {
+  if (e.error.size() > 0) {
+    std::cout << "Error: " << e.sl.to_string(l.whole_file())
+              << " - " << e.error << std::endl;
+  }
+  for (const auto& c : e.children) {
+    log_all_parse_errors(l, c);
+  }
+}
 
 parse_node parse_program(lexer& l) {
   parse_error root;
@@ -16,16 +25,11 @@ parse_node parse_program(lexer& l) {
       }
     } catch (parse_error e) {
       root.push_back(e);
-      if (l.peek()) {
-        children.push_back({ *l.next(), {} });
-      }
+      try_consume_until_after_item(l);
     }
   }
   if (root.children.size() > 0) {
-    for (const auto& e : root.children) {
-      std::cout << "Error: " << e.sl.to_string(l.whole_file())
-                << " - " << e.error << std::endl;
-    }
+    log_all_parse_errors(l, root);
     std::exit(1);
   }
   return { nterm::program, children };
