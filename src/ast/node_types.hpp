@@ -8,7 +8,7 @@ struct statement_list {
   bool is_last_item_expr;
 };
 
-struct ident {
+struct unres_ident {
   nonstd::string_view val;
 };
 

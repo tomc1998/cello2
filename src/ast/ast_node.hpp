@@ -3,7 +3,7 @@ ast_node* shunting_yard(const parse_node& root);
 std::string to_string(const ast_node &val);
 
 struct ast_node {
-  nonstd::variant<statement_list, bin_expr, ident, float_lit, int_lit> val;
+  nonstd::variant<statement_list, bin_expr, unres_ident, float_lit, int_lit> val;
 
 private:
   void init(const parse_node& n) {
@@ -41,6 +41,7 @@ private:
           std::cerr << "Unsupported literal" << std::endl;
         }
       } else if (n.children[0].is_nterm(nterm::identifier)) {
+        val = unres_ident {n.children[0].children[0].val.template get<token>().val};
       } else {
         std::cerr << "Unsupported expression type" << std::endl;
       }
@@ -64,7 +65,7 @@ public:
   llvm::Value* gen() {
     val.match([&](statement_list e) {},
               [&](bin_expr e) {},
-              [&](ident e) {},
+              [&](unres_ident e) {},
               [&](float_lit e) {},
               [&](int_lit e) {});
     return nullptr;
