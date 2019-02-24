@@ -84,6 +84,18 @@ struct parse_node {
   bool is_term_type(T v) const {
     return val.template is<token>() && val.template get<token>().type == v;
   }
+
+  std::string to_string() const {
+    if (val.template is<nterm>()) {
+      std::string res;
+      for (const auto& c : children) {
+        res += c.to_string() + " ";
+      }
+      return res;
+    } else {
+      return std::string(val.template get<token>().val);
+    }
+  }
 };
 
 // Forward declare all the parse functions
