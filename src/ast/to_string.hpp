@@ -36,6 +36,7 @@
   std::string to_string(const ast_node &val) {
     return val.val.match([](statement_list v){return to_string(v);},
                          [](bin_expr v){return to_string(v);},
+                         [](comptime v){return "comptime(" + to_string(v.val) + ")";},
                          [](unres_ident v){return std::string(v.val);},
                          [](float_lit v){return std::to_string(v.val);},
                          [](int_lit v){return std::to_string(v.val);});

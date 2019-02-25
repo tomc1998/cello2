@@ -1,3 +1,5 @@
+/** Functions in this file are implemented in node_types_impl.hpp */
+
 struct ast_node;
 
 struct statement_list {
@@ -6,6 +8,12 @@ struct statement_list {
       (missing a ';'). This is important, because if so that counts as the
       value of this whole block. */
   bool is_last_item_expr;
+  statement_list(const parse_node&);
+  statement_list() {};
+};
+
+struct comptime {
+  statement_list val;
 };
 
 struct unres_ident {

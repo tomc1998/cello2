@@ -1,11 +1,11 @@
 /**
    Similar to init, but does shunting yard on a binary expression.
-   @param n - An expression, who's first child is a binary expression.
+   @param n - A binary expression parse node.
 */
 ast_node* shunting_yard(const parse_node& root) {
   std::vector<bin_op> operator_stack;
   std::vector<ast_node*> output_stack;
-  std::vector<const parse_node*> visit_queue { &root.children[0] };
+  std::vector<const parse_node*> visit_queue { &root };
 
   // Pops from the operator stack and applies the op to the top of the
   // output stack

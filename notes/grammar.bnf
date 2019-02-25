@@ -33,8 +33,8 @@ Expression ::= "(" Expression ")"
   | If
   | UnaryOp Expression
   | Lambda
-  | "comptime" Expression
-  // This is double-used - when specifying an array type (i.e. int[3]) AND accessing (i.e. foo[3])
+  // This is double-used - when specifying an array type (i.e. int[3]) AND
+  // accessing (i.e. foo[3])
   | ArrayAccess
   | SliceType
   | Range
@@ -75,7 +75,7 @@ Comptime ::= "comptime" StatementList
 
 ParameterDeclList ::= "(" ( ParameterDecl [","] ) * ")"
 TemplateParameterDeclList ::= "<" ( ParameterDecl [","] ) * ">"
-ParameterDecl ::= Identifier ":" Expression | Expression
+ParameterDecl ::= [ "comptime" ] Identifier ":" Expression | [ "comptime" ] Expression
 ParameterList ::= "(" ( Expression [","] ) * ")"
 TemplateParameterList ::= "<" ( Expression [","] ) * ">"
 

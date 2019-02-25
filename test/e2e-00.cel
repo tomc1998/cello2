@@ -2,3 +2,7 @@
 /** An end-to-end test of the cello compiler */
 
 1 + 3 * 4 > 2 + a*x;
+
+comptime {
+  2 + 3 < 4
+}

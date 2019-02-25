@@ -12,5 +12,6 @@ namespace ast {
 #include "ast/ast_node.hpp"
 #include "ast/shunting_yard.hpp"
 #include "ast/to_string.hpp"
+#include "ast/node_types_impl.hpp"
 
 }
