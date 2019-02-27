@@ -9,5 +9,8 @@ g++ `llvm-config --cxxflags | sed 's/-Wcovered-switch-default //;s/-Wstring-conv
     -Ideps/variant/include \
     -Ideps/string-view-lite/include \
     -Ideps/optional-lite/include && \
-g++ `llvm-config --ldflags` -o build/out build/out.o \
-    `llvm-config --libs all`
+    ## We need this --system-libs line on osx for ncurses (?)
+    g++ `llvm-config --ldflags` \
+        `llvm-config --system-libs` \
+        -o build/out build/out.o \
+        `llvm-config --libs all`

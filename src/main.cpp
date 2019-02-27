@@ -7,8 +7,21 @@
 #include <cstdint>
 #include <regex>
 
-// LLVM shite
+/* LLVM shite */
+// LLVM IR
 #include <llvm/IR/Value.h>
+#include <llvm/IR/Type.h>
+#include <llvm/IR/Constant.h>
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/IRBuilder.h>
+// LLVM target init
+#include <llvm/Support/TargetRegistry.h>
+#include <llvm/Support/TargetSelect.h>
+#include <llvm/Target/TargetMachine.h>
+#include <llvm/Target/TargetOptions.h>
+
+using namespace llvm;
 
 // Only including this to throw runtime_errors. Can be much better than asserts.
 #include <exception>
@@ -48,6 +61,19 @@ int main(int argc, const char** argv) {
   lexer l(file_name, file);
   const auto tree = parse(l);
   ast::ast_node ast(tree);
+
+  // Code gen the ast
+  InitializeAllTargetInfos();
+  InitializeAllTargets();
+  InitializeAllTargetMCs();
+  InitializeAllAsmParsers();
+  InitializeAllAsmPrinters();
+
+  LLVMContext ctx;
+  IRBuilder<> builder(ctx);
+  std::unique_ptr<Module> module = make_unique<Module>("test_mod", ctx);
+  const auto val = ast.gen(module.get(), ctx, builder, false);
+  val->print(errs());
 
   std::cout << "AST" << std::endl;
   std::cout << ast::to_string(ast) << std::endl;

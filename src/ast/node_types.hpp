@@ -3,6 +3,9 @@
 struct ast_node;
 struct fn_arg;
 
+using gen_f = Value* (Module *m, LLVMContext &ctx, IRBuilder<> &b, bool lval);
+using gen_as_type_f = Type* (Module *m, LLVMContext &ctx, IRBuilder<> &b);
+
 struct statement_list {
   std::vector<ast_node> children;
   /** True if the last item of this list of statements is an expression
@@ -25,6 +28,7 @@ struct fn_declaration {
   bool is_mut : 1; // Does this function have mutable access to the struct it belongs to (assuming this is a method)
   fn_declaration(const parse_node&);
   fn_declaration() {};
+  gen_f gen;
 };
 
 struct comptime {
@@ -41,6 +45,7 @@ struct float_lit {
 
 struct int_lit {
   int64_t val;
+  gen_f gen;
 };
 
 struct bin_expr {
@@ -59,7 +64,8 @@ public:
   ast_node() {};
   ast_node(const parse_node& n);
 
-  llvm::Value* gen();
+  gen_f gen;
+  gen_as_type_f gen_as_type;
 };
 
 struct fn_arg {
