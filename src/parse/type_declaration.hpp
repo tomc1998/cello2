@@ -2,6 +2,9 @@
 parse_node parse_type_declaration(lexer& l) {
   PARSE_ASSERT_VAL(l, "type");
   std::vector<parse_node> children;
+  if (l.peek()->val == "export") {
+    children.push_back({ *l.next(), {} });
+  }
   children.push_back({ *l.next(), {} });
   children.push_back(parse_identifier(l));
   PARSE_ASSERT_NOT_EMPTY(l, "Expected rest of function declaration, got EOF");

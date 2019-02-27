@@ -6,3 +6,7 @@
 comptime {
   2 + 3 < 4
 }
+
+fn add = (a: i32, b: i32) {
+  a + b
+}

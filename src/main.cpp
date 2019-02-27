@@ -7,6 +7,9 @@
 #include <cstdint>
 #include <regex>
 
+// LLVM shite
+#include <llvm/IR/Value.h>
+
 // Only including this to throw runtime_errors. Can be much better than asserts.
 #include <exception>
 

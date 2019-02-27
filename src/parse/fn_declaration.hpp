@@ -1,5 +1,8 @@
 parse_node parse_fn_declaration(lexer& l) {
   std::vector<parse_node> children;
+  if (l.peek()->val == "export") {
+    children.push_back({ *l.next(), {} });
+  }
   PARSE_ASSERT_VAL(l, "fn");
   children.push_back({ *l.next(), {} });
   children.push_back(parse_identifier(l));

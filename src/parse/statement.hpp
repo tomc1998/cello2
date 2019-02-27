@@ -3,13 +3,11 @@ parse_node parse_statement(lexer& l) {
   PARSE_ASSERT_NOT_EMPTY(l, "Expected statement, got EOF");
   std::vector<parse_node> children;
   if (l.peek()->val == "export") {
-    children.push_back({ *l.next(), {} });
-    PARSE_ASSERT_NOT_EMPTY(l, "Expected rest of statement, got EOF");
-    if (l.peek()->val == "var" || l.peek()->val == "mut") {
+    if (l.peek(1) && (l.peek(1)->val == "var" || l.peek(1)->val == "mut")) {
       children.push_back(parse_var_declaration(l));
-    } else if (l.peek()->val == "type") {
+    } else if (l.peek(1) && l.peek(1)->val == "type") {
       children.push_back(parse_type_declaration(l));
-    } else if (l.peek()->val == "fn") {
+    } else if (l.peek(1) && l.peek(1)->val == "fn") {
       children.push_back(parse_fn_declaration(l));
     } else {
       throw parse_error(l, std::string("Expected 'var', 'type', or 'fn'"

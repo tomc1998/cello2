@@ -85,6 +85,10 @@ struct parse_node {
     return val.template is<token>() && val.template get<token>().type == v;
   }
 
+  const token& term() const {
+    return val.template get<token>();
+  }
+
   std::string to_string() const {
     if (val.template is<nterm>()) {
       std::string res;

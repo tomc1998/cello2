@@ -1,6 +1,9 @@
 
 parse_node parse_var_declaration(lexer& l) {
   std::vector<parse_node> children;
+  if (l.peek()->val == "export") {
+    children.push_back({ *l.next(), {} });
+  }
   if (l.peek()->val == "comptime") {
     children.push_back({ *l.next(), {} });
   }

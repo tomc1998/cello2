@@ -7,9 +7,9 @@ Preprocessor ::= "#" "include" Identifier | "#" "import" Identifier
 
 StatementList ::= "{" ( Statement [ ";" ] ) * "}"
 
-Statement ::= [ "export" ] VarDeclaration
-  | [ "export" ] TypeDeclaration
-  | [ "export" ] FnDeclaration
+Statement ::= VarDeclaration
+  | TypeDeclaration
+  | FnDeclaration
   | ExternFnDeclaration
   | Expression
   | ComptimeForLoop
@@ -39,11 +39,11 @@ Expression ::= "(" Expression ")"
   | SliceType
   | Range
 
-VarDeclaration ::= [ "comptime" ] "var" Identifier [ ":" Expression ] "=" Expression
+VarDeclaration ::= [ "export" ] [ "comptime" ] "var" Identifier [ ":" Expression ] "=" Expression
   | [ "comptime" ] "mut" Identifier [ ":" Expression ] "=" Expression
   
 FnDeclaration ::=
-  "fn" Identifier [ TemplateParameterDeclList ] "=" FnSignature Expression
+  [ "export" ] "fn" Identifier [ TemplateParameterDeclList ] "=" FnSignature Expression
 
 ExternFnDeclaration ::=
   "extern" "fn" Identifier "=" FnSignature
@@ -52,7 +52,7 @@ FnSignature ::= ParameterDeclList [ "mut" ] [ "->" Expression ]
 
 FnType ::= "fn" FnSignature
 
-TypeDeclaration ::= type Identifier "=" TypeDefinition
+TypeDeclaration ::= [ "export" ] type Identifier "=" TypeDefinition
 
 TypeDefinition ::= Expression
   | Comptime
