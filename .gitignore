@@ -4,3 +4,6 @@ build
 deps
 TAGS
 tags
+
+# Machine-specific config stuff
+macbuild.sh

@@ -2,7 +2,7 @@
 set -x
 mkdir -p build
 
-g++ `llvm-config --cxxflags | sed 's/-Wcovered-switch-default //;s/-Wstring-conversion //;s/-Werror=unguarded-availability-new //;s/-DNDEBUG //'` \
+g++ `llvm-config --cxxflags | sed 's/-Wcovered-switch-default //;s/-Wstring-conversion //;s/-Werror=unguarded-availability-new //;s/-DNDEBUG //;s/-Wno-class-memaccess//'` \
     -fexceptions \
     -Wall -Werror -g -O0 -std=c++14 -c \
     -o build/out.o src/main.cpp ${CFLAGS} \
