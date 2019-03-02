@@ -38,6 +38,7 @@ struct comptime {
 
 struct unres_ident {
   nonstd::string_view val;
+  gen_f gen;
   gen_as_type_f gen_as_type;
 };
 

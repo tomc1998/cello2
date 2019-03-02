@@ -20,19 +20,9 @@ struct var {
       is a 'classical' variable - if this var is a function_type, it'll just be the
       function value, and can be called immediately.
 
-      If this is a type (i.e. a 'kind', so $type), this will be an llvm::Type*.
-
       TODO Figure out semantics for lambdas here
   */
-  nonstd::variant<Value*, Type*> val;
-
-  Type* get_llvm_type() const {
-    return val.template get<Type*>();
-  }
-
-  Value* get_llvm_val() const {
-    return val.template get<Value*>();
-  }
+  Value* val;
 
   bool is_mutable : 1;
   bool is_member : 1;
