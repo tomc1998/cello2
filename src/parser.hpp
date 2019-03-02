@@ -73,6 +73,7 @@ enum class nterm {
 struct parse_node {
   nonstd::variant<nterm, token> val;
   std::vector<parse_node> children;
+  source_label sl;
   bool is_nterm(nterm n) const {
     return val.template is<nterm>() && val.template get<nterm>() == n;
   }

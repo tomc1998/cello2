@@ -97,7 +97,8 @@ fn_declaration::fn_declaration(const parse_node &n) {
   }
 }
 
-ast_node::ast_node(const parse_node& n) {
+ast_node::ast_node(const parse_node& n)
+  : sl(n.sl) {
   init(n);
 }
 

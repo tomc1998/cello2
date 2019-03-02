@@ -16,6 +16,8 @@ namespace ast {
 #include "ast/to_string.hpp"
   // Implements functions to convert from parse tree to AST nodes
 #include "ast/node_types_convert_impl.hpp"
+  // Implements typegen (similar to codegen for llvm::Type*) from an ast
+#include "ast/typegen.hpp"
   // Implements codegen from an ast
 #include "ast/codegen.hpp"
 

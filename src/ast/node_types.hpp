@@ -3,8 +3,8 @@
 struct ast_node;
 struct fn_arg;
 
-using gen_f = Value* (Module *m, LLVMContext &ctx, IRBuilder<> &b, bool lval);
-using gen_as_type_f = Type* (Module *m, LLVMContext &ctx, IRBuilder<> &b);
+using gen_f = Value* (Module *m, LLVMContext &ctx, IRBuilder<> &b, scope& s, const type* exp, bool lval);
+using gen_as_type_f = type* (Module *m, LLVMContext &ctx, IRBuilder<> &b, const scope& s);
 
 struct statement_list {
   std::vector<ast_node> children;
@@ -14,6 +14,7 @@ struct statement_list {
   bool is_last_item_expr;
   statement_list(const parse_node&);
   statement_list() {};
+  gen_f gen;
 };
 
 struct fn_declaration {
@@ -37,6 +38,7 @@ struct comptime {
 
 struct unres_ident {
   nonstd::string_view val;
+  gen_as_type_f gen_as_type;
 };
 
 struct float_lit {
@@ -52,17 +54,19 @@ struct bin_expr {
   ast_node* lchild;
   ast_node* rchild;
   bin_op op;
+  gen_f gen;
 };
 
 struct ast_node {
   nonstd::variant<statement_list, bin_expr, unres_ident, float_lit, int_lit, comptime, fn_declaration> val;
+  source_label sl;
 
 private:
   void init(const parse_node& n);
 public:
 
-  ast_node() {};
   ast_node(const parse_node& n);
+  ast_node() {};
 
   gen_f gen;
   gen_as_type_f gen_as_type;

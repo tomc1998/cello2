@@ -7,3 +7,5 @@ tags
 
 # Machine-specific config stuff
 macbuild.sh
+
+.clang_complete

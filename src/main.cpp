@@ -15,6 +15,7 @@
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/DerivedTypes.h>
 // LLVM target init
 #include <llvm/Support/TargetRegistry.h>
 #include <llvm/Support/TargetSelect.h>
@@ -35,8 +36,12 @@ namespace nonstd {
 #include "arg_parse.hpp"
 #include "source_label.hpp"
 #include "lexer.hpp"
+#include "type.hpp"
+#include "scope.hpp"
+#include "type_impl.hpp"
 #include "parse_error.hpp"
 #include "parser.hpp"
+#include "builtin_types.hpp"
 #include "ast.hpp"
 
 int main(int argc, const char** argv) {
@@ -72,7 +77,9 @@ int main(int argc, const char** argv) {
   LLVMContext ctx;
   IRBuilder<> builder(ctx);
   std::unique_ptr<Module> module = make_unique<Module>("test_mod", ctx);
-  const auto val = ast.gen(module.get(), ctx, builder, false);
+  scope module_scope;
+  add_builtin_types(module_scope, ctx);
+  const auto val = ast.gen(module.get(), ctx, builder, module_scope, nullptr, false);
   val->print(errs());
 
   std::cout << "AST" << std::endl;

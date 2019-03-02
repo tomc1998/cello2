@@ -8,5 +8,5 @@ parse_node parse_literal(lexer& l) {
     throw new parse_error(l, std::string("Expected literal, got ")
                           + std::string(l.peek()->val));
   }
-  return { nterm::literal, { { *l.next(), {} } } };
+  return { nterm::literal, { { *l.next(), {}, l.get_curr_source_label() } }, l.get_curr_source_label() };
 }

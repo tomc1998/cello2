@@ -18,42 +18,42 @@ parse_node parse_expression(lexer& l, bool no_right_angle) {
   parse_node lrec;
   // Try to parse all non-recursive stuff
   if (l.peek()->val == "{") { // StatementList
-    lrec = { nterm::expression, { parse_statement_list(l) } };
+    lrec = { nterm::expression, { parse_statement_list(l) }, l.get_curr_source_label() };
   } else if (l.peek()->val == "(") {
-    std::vector<parse_node> children { { *l.next(), {} }, parse_expression(l) };
+    std::vector<parse_node> children { { *l.next(), {}, l.get_curr_source_label() }, parse_expression(l) };
     PARSE_ASSERT_VAL(l, ")");
-    children.push_back({ *l.next(), {} });
-    lrec = { nterm::expression, children };
+    children.push_back({ *l.next(), {}, l.get_curr_source_label() });
+    lrec = { nterm::expression, children, l.get_curr_source_label() };
   } else if (l.peek()->val == "comptime") {
     if (l.peek(1) && l.peek(1)->val == "if") {
-      lrec = { nterm::expression, { parse_comptime_if(l) } };
+      lrec = { nterm::expression, { parse_comptime_if(l) }, l.get_curr_source_label() };
     } else if (l.peek(1) && (l.peek(1)->val == "var" || l.peek(1)->val == "mut")) {
-      lrec = { nterm::expression, { parse_var_declaration(l) } };
+      lrec = { nterm::expression, { parse_var_declaration(l) }, l.get_curr_source_label() };
     } else {
-      lrec = { nterm::expression, { parse_comptime(l) } };
+      lrec = { nterm::expression, { parse_comptime(l) }, l.get_curr_source_label() };
     }
   } else if (l.peek()->val == "$") {
-    lrec = { nterm::expression, { parse_meta_type_ident(l) } };
+    lrec = { nterm::expression, { parse_meta_type_ident(l) }, l.get_curr_source_label() };
   } else if (l.peek()->type == token_type::op) {
-    lrec = { nterm::expression, { parse_op(l), parse_expression(l) } };
+    lrec = { nterm::expression, { parse_op(l), parse_expression(l) }, l.get_curr_source_label() };
   } else if (l.peek()->val == "fn") {
-    lrec = { nterm::expression, { parse_fn_type(l) } };
+    lrec = { nterm::expression, { parse_fn_type(l) }, l.get_curr_source_label() };
   } else if (l.peek()->val == "lambda") {
-    lrec = { nterm::expression, { parse_lambda(l) } };
+    lrec = { nterm::expression, { parse_lambda(l) }, l.get_curr_source_label() };
   } else if (l.peek()->val == "if") {
-    lrec = { nterm::expression, { parse_if(l) } };
+    lrec = { nterm::expression, { parse_if(l) }, l.get_curr_source_label() };
   } else if (l.peek()->val == "make") {
-    lrec = { nterm::expression, { parse_make_expression(l) } };
+    lrec = { nterm::expression, { parse_make_expression(l) }, l.get_curr_source_label() };
   } else if (l.peek()->type == token_type::int_lit ||
              l.peek()->type == token_type::float_lit ||
              l.peek()->type == token_type::string_lit ||
              l.peek()->type == token_type::c_string_lit) {
     // Literal
-    lrec = { nterm::expression, { parse_literal(l) } };
+    lrec = { nterm::expression, { parse_literal(l) }, l.get_curr_source_label() };
   } else if (l.peek()->type == token_type::ident) {
-    lrec = { nterm::expression, { parse_identifier(l) } };
+    lrec = { nterm::expression, { parse_identifier(l) }, l.get_curr_source_label() };
   } else if (l.peek()->val == "undefined") {
-    lrec = { nterm::expression, { { *l.next(), {} } } };
+    lrec = { nterm::expression, { { *l.next(), {}, l.get_curr_source_label() } }, l.get_curr_source_label() };
   } else {
     throw parse_error(l, std::string("Unable to parse expression starting with '")
                       + std::string(l.peek()->val) + "'");
@@ -95,7 +95,7 @@ parse_node parse_expression(lexer& l, bool no_right_angle) {
   // If we added some more stuff on the end in the previous stage, re-wrap this
   // in an 'expression' nterm. Otherwise, just return as-is.
   if (added_lrec) {
-    return { nterm::expression,  { lrec } };
+    return { nterm::expression,  { lrec }, l.get_curr_source_label() };
   } else {
     return lrec;
   }

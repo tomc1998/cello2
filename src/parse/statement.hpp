@@ -32,5 +32,5 @@ parse_node parse_statement(lexer& l) {
     }
   }
 
-  return { nterm::statement, children };
+  return { nterm::statement, children, l.get_curr_source_label() };
 }

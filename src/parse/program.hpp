@@ -14,14 +14,14 @@ parse_node parse_program(lexer& l) {
   while(l.peek()) {
     try {
       while (l.peek() && l.peek()->val == ";") {
-        children.push_back({ *l.next(), {} });
+        children.push_back({ *l.next(), {}, l.get_curr_source_label() });
       }
       if (!l.peek()) {
         break;
       }
       children.push_back(parse_statement_or_preprocessor(l));
       if (l.peek() && l.peek()->val == ";") {
-        children.push_back({ *l.next(), {} });
+        children.push_back({ *l.next(), {}, l.get_curr_source_label() });
       }
     } catch (parse_error e) {
       root.push_back(e);
@@ -32,5 +32,5 @@ parse_node parse_program(lexer& l) {
     log_all_parse_errors(l, root);
     std::exit(1);
   }
-  return { nterm::program, children };
+  return { nterm::program, children, l.get_curr_source_label() };
 }
