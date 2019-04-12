@@ -1,3 +1,5 @@
+#pragma once
+
 /** Fns in this file are implemented in node_types_impl.hpp */
 
 struct ast_node;

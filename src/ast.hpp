@@ -1,24 +1,7 @@
-/**
-   Includes everything from the ast/ directory for converting the parse tree to
-   an ast.
- */
+#pragma once
 
 namespace ast {
-
-  // Binary operators
-#include "ast/bin_op.hpp"
-  // Contains definitions of AST nodes
-#include "ast/node_types.hpp"
-  // Shunting yard implementation for converting a parse subtree to an AST
-  // w.r.t. operator precedence
-#include "ast/shunting_yard.hpp"
-  // Functions to print AST nodes
-#include "ast/to_string.hpp"
-  // Implements functions to convert from parse tree to AST nodes
-#include "ast/node_types_convert_impl.hpp"
-  // Implements typegen (similar to codegen for llvm::Type*) from an ast
-#include "ast/typegen.hpp"
-  // Implements codegen from an ast
-#include "ast/codegen.hpp"
-
+  #include "ast/bin_op.hpp"
+  #include "ast/node_types.hpp"
+  std::string to_string(const ast_node &val);
 }
