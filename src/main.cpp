@@ -38,7 +38,6 @@ namespace nonstd {
 #include "lexer.hpp"
 #include "type.hpp"
 #include "scope.hpp"
-#include "type_impl.hpp"
 #include "parse_error.hpp"
 #include "parser.hpp"
 #include "builtin_types.hpp"
